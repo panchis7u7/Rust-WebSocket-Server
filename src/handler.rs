@@ -1,4 +1,5 @@
 use futures::Future;
+use log::info;
 use uuid::Uuid;
 use warp::filters::ws::Message;
 use warp::http::StatusCode;
@@ -8,6 +9,7 @@ use crate::models::{Client, Clients, Event, RegisterRequest, RegisterResponse, R
 use crate::ws;
 
 async fn register_client(id: String, user_id: usize, clients: Clients) {
+    info!("Client registration request from ID: {}", id);
     clients.lock().await.insert(
         id,
         Client {

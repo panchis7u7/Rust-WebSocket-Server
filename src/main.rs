@@ -1,4 +1,4 @@
-use argparse::{ArgumentParser, Store, StoreTrue};
+use argparse::{ArgumentParser, Store};
 use models::Clients;
 use std::net::Ipv4Addr;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
@@ -13,11 +13,16 @@ mod ws;
 
 #[tokio::main]
 async fn main() {
+    // Setup server logging levels.
+    ::std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
+    // Variables for CLI argparse fill.
     let mut bind_address_str: String = "127.0.0.1".to_string();
     let mut bind_port: u16 = 8080;
 
+    // Argparse fill, this block limits scope of borrows by ap.refer() method
     {
-        // this block limits scope of borrows by ap.refer() method
         let mut arg_parse = ArgumentParser::new();
         arg_parse.set_description("Websocket server argument listing.");
         arg_parse.refer(&mut bind_address_str).add_option(
@@ -32,8 +37,6 @@ async fn main() {
         );
         arg_parse.parse_args_or_exit();
     }
-
-    //dbg!("{:?}", arg_parse);
 
     // If you need to mutate through an Arc, use Mutex, RwLock, or one of the Atomic types.
     // we want clients to connect via WebSockets to our service. To accommodate this,
@@ -80,7 +83,7 @@ async fn main() {
 
     let bind_address: Ipv4Addr = bind_address_str.parse().expect("Invalid IP address!");
 
-    // Listen for any ws traffic on 8080.
+    // Listen for any ws traffic specified on the bind_address:bind_port.
     println!(
         "Listening for any websocket client register on {}:{}",
         &bind_address_str, &bind_port
