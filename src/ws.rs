@@ -6,6 +6,10 @@ use warp::filters::ws::WebSocket;
 
 use crate::models::{Client, Clients};
 
+// Now that clients can register and unregister, it’s time to let them connect to our real-time WebSocket endpoint.
+
+// #########################################################################################################
+
 pub async fn client_connection(ws: WebSocket, id: String, _clients: Clients, mut _client: Client) {
     let (client_ws_sender, _client_ws_rcv) = ws.split();
     let (_client_sender, client_rcv) = mpsc::unbounded_channel();
@@ -20,3 +24,5 @@ pub async fn client_connection(ws: WebSocket, id: String, _clients: Clients, mut
         }
     }));
 }
+
+// #########################################################################################################
