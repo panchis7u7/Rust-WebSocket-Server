@@ -1,7 +1,11 @@
+use argparse::{ArgumentParser, Store, StoreTrue};
 use models::Clients;
+use std::net::Ipv4Addr;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 use tokio::sync::Mutex;
 use warp::Filter;
+
+extern crate argparse;
 
 mod handler;
 mod models;
@@ -9,6 +13,28 @@ mod ws;
 
 #[tokio::main]
 async fn main() {
+    let mut bind_address_str: String = "127.0.0.1".to_string();
+    let mut bind_port: u16 = 8080;
+
+    {
+        // this block limits scope of borrows by ap.refer() method
+        let mut arg_parse = ArgumentParser::new();
+        arg_parse.set_description("Websocket server argument listing.");
+        arg_parse.refer(&mut bind_address_str).add_option(
+            &["-l", "--listen"],
+            Store,
+            "Listening IP address.",
+        );
+        arg_parse.refer(&mut bind_port).add_option(
+            &["-p", "--port"],
+            Store,
+            "Listening port number.",
+        );
+        arg_parse.parse_args_or_exit();
+    }
+
+    //dbg!("{:?}", arg_parse);
+
     // If you need to mutate through an Arc, use Mutex, RwLock, or one of the Atomic types.
     // we want clients to connect via WebSockets to our service. To accommodate this,
     // we need a way to keep track of these clients within the service.
@@ -52,9 +78,16 @@ async fn main() {
         .or(publish)
         .with(warp::cors().allow_any_origin());
 
+    let bind_address: Ipv4Addr = bind_address_str.parse().expect("Invalid IP address!");
+
     // Listen for any ws traffic on 8080.
-    println!("Listening for any websocket client register on 127.0.0.1:8000");
-    warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
+    println!(
+        "Listening for any websocket client register on {}:{}",
+        &bind_address_str, &bind_port
+    );
+    warp::serve(routes)
+        .run((bind_address.octets(), bind_port))
+        .await;
 }
 
 fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {

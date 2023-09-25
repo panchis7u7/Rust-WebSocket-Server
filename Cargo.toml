@@ -13,3 +13,4 @@ serde = { version = "1.0.188", features = ["derive"] }
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
 futures = { version = "0.3.28", default-features = false }
 tokio = { version = "1.32", features = ["macros", "sync", "rt-multi-thread"] }
+argparse = "0.2.2"
