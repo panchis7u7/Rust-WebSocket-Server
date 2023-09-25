@@ -7,7 +7,7 @@ use warp::{filters::ws::Message, reject::Rejection};
 #[derive(Clone)]
 pub struct Client {
     pub user_id: usize,
-    pub topics: Vec<String>,
+    pub groups: Vec<String>,
     pub sender: Option<mpsc::UnboundedSender<std::result::Result<Message, warp::Error>>>,
 }
 
@@ -35,15 +35,21 @@ pub struct RegisterResponse {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Event {
     pub user_id: Option<usize>,
-    pub topic: String,
-    pub message: String,
+    pub group: String,
+    pub message: Data,
 }
 
 // #########################################################################################################
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct TopicsRequest {
-    topics: Vec<String>,
+    groups: Vec<String>,
 }
 
 // #########################################################################################################
+// curl -X POST 'http://10.152.201.30:8080/publish' -H 'Content-Type: application/json' -d '{"user_id": 1, "group": "test", "message": { "status": "test2"} }'
+
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+pub struct Data {
+    status: String,
+}

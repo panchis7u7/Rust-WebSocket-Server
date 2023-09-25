@@ -54,6 +54,7 @@ async fn main() {
         .and(warp::post())
         .and(warp::body::json())
         .and(with_clients(clients.clone()))
+        .and(warp::path::full())
         .and_then(handler::register_handler)
         .or(register
             .and(warp::delete())

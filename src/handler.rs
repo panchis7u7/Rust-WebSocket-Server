@@ -1,6 +1,7 @@
 use futures::Future;
 use log::info;
 use uuid::Uuid;
+use warp::filters::path::FullPath;
 use warp::filters::ws::Message;
 use warp::http::StatusCode;
 use warp::reply::{json, Reply};
@@ -15,13 +16,17 @@ use crate::ws;
 
 // #########################################################################################################
 
-pub async fn register_handler(body: RegisterRequest, clients: Clients) -> Result<impl Reply> {
+pub async fn register_handler(
+    body: RegisterRequest,
+    clients: Clients,
+    path: FullPath,
+) -> Result<impl Reply> {
     let user_id = body.user_id;
     let uuid = Uuid::new_v4().simple().to_string();
 
     register_client(uuid.clone(), user_id, clients).await;
     Ok(json(&RegisterResponse {
-        url: format!("ws://127.0.0.1:8000/ws/{}", uuid),
+        url: format!("{}/{}", path.as_str(), uuid),
     }))
 }
 
@@ -31,7 +36,7 @@ async fn register_client(id: String, user_id: usize, clients: Clients) {
         id,
         Client {
             user_id,
-            topics: vec![String::from("cats")],
+            groups: vec![String::from("cats")],
             sender: None,
         },
     );
@@ -75,7 +80,7 @@ pub async fn ws_handler(ws: warp::ws::Ws, id: String, clients: Clients) -> Resul
 // we have to iterate the client’s data structure if a user_id is set, filtering out all clients that are not
 // the specified user. We’re only interested in clients that are subscribed to the topic of the message.
 // We use each client’s sender to transmit the message down the pipeline.
-// curl -X POST 'http://localhost:8000/publish' -H 'Content-Type: application/json' -d '{"user_id": 1, "topic": "cats", "message": "are awesome"}'
+// curl -X POST 'http://localhost:8000/publish' -H 'Content-Type: application/json' -d '{"user_id": 1, "group": "test", "message": "wenas"}'
 
 pub async fn publish_handler(body: Event, clients: Clients) -> Result<impl Reply> {
     clients
@@ -86,10 +91,12 @@ pub async fn publish_handler(body: Event, clients: Clients) -> Result<impl Reply
             Some(v) => client.user_id == v,
             None => true,
         })
-        .filter(|(_, client)| client.topics.contains(&body.topic))
+        .filter(|(_, client)| client.groups.contains(&body.group))
         .for_each(|(_, client)| {
             if let Some(sender) = &client.sender {
-                let _ = sender.send(Ok(Message::text(body.message.clone())));
+                let _ = sender.send(Ok(Message::text(
+                    serde_json::to_string(&body.message.clone()).unwrap(),
+                )));
             }
         });
 
