@@ -2,9 +2,9 @@ use argparse::{ArgumentParser, Store};
 use models::Clients;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
-use tokio::sync::{Mutex, RwLock};
-use warp::Filter;
+use tokio::sync::RwLock;
 use warp::http::header::HeaderValue;
+use warp::Filter;
 
 extern crate argparse;
 
@@ -39,8 +39,6 @@ async fn main() {
         arg_parse.parse_args_or_exit();
     }
 
-    
-
     // If you need to mutate through an Arc, use Mutex, RwLock, or one of the Atomic types.
     // we want clients to connect via WebSockets to our service. To accommodate this,
     // we need a way to keep track of these clients within the service.
@@ -57,9 +55,13 @@ async fn main() {
         .and(warp::post())
         .and(warp::body::json())
         .and(with_clients(clients.clone()))
-        .and(warp::addr::remote().map(move |addr: Option<SocketAddr>| format!("{}:{}", &addr.unwrap().ip(), &addr.unwrap().port())))
+        .and(warp::addr::remote().map(move |addr: Option<SocketAddr>| {
+            format!("{}:{}", &addr.unwrap().ip(), &addr.unwrap().port())
+        }))
         //.and(warp::header::headers_cloned().map(|headers: HeaderMap| format!("{:?}", headers)))
-        .and(warp::header::value("host").map(|value: HeaderValue| format!("{}", &str::replace(value.to_str().unwrap(), "\"", ""))))
+        .and(warp::header::value("host").map(|value: HeaderValue| {
+            format!("{}", &str::replace(value.to_str().unwrap(), "\"", ""))
+        }))
         .and_then(handler::register_handler)
         .or(register
             .and(warp::delete())
