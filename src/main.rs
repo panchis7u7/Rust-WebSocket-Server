@@ -50,8 +50,6 @@ async fn main() {
     // Map the "health" route to the health_handler listener.
     let health_route = warp::path!("health").and_then(handler::health_handler);
 
-    let bind_address_str_clone = bind_address_str.to_owned();
-
     // Specify the route for client registration as it will be mapped afterwards.
     let register = warp::path("register");
     // Map the register and unregister handles to the client accordingly.
@@ -59,9 +57,9 @@ async fn main() {
         .and(warp::post())
         .and(warp::body::json())
         .and(with_clients(clients.clone()))
-        .and(warp::addr::remote().map(move |_addr: Option<SocketAddr>| format!("{}:{}", &bind_address_str_clone, &bind_port)))
+        .and(warp::addr::remote().map(move |addr: Option<SocketAddr>| format!("{}:{}", &addr.unwrap().ip(), &addr.unwrap().port())))
         //.and(warp::header::headers_cloned().map(|headers: HeaderMap| format!("{:?}", headers)))
-        .and(warp::header::value("host").map(|value: HeaderValue| format!("{:?}", value)))
+        .and(warp::header::value("host").map(|value: HeaderValue| format!("{}", &str::replace(value.to_str().unwrap(), "\"", ""))))
         .and_then(handler::register_handler)
         .or(register
             .and(warp::delete())
