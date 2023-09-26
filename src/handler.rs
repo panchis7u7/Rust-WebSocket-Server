@@ -83,6 +83,11 @@ pub async fn ws_handler(ws: warp::ws::Ws, id: String, clients: Clients) -> Resul
 // curl -X POST 'http://localhost:8000/publish' -H 'Content-Type: application/json' -d '{"user_id": 1, "group": "test", "message": "wenas"}'
 
 pub async fn publish_handler(body: Event, clients: Clients) -> Result<impl Reply> {
+    info!(
+        "Message Recevied from user: {}: \n {}",
+        body.user_id.unwrap(),
+        body.message.to_string()
+    );
     clients
         .lock()
         .await
