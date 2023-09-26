@@ -1,5 +1,6 @@
 use futures::Future;
 use log::info;
+use tokio::net::unix::SocketAddr;
 use uuid::Uuid;
 use warp::filters::path::FullPath;
 use warp::filters::ws::Message;
@@ -19,14 +20,14 @@ use crate::ws;
 pub async fn register_handler(
     body: RegisterRequest,
     clients: Clients,
-    path: FullPath,
+    path: String,
 ) -> Result<impl Reply> {
     let user_id = body.user_id;
     let uuid = Uuid::new_v4().simple().to_string();
 
     register_client(uuid.clone(), user_id, clients).await;
     Ok(json(&RegisterResponse {
-        url: format!("{}/{}", path.as_str(), uuid),
+        url: format!("ws://{}/ws/{}", path, uuid),
     }))
 }
 
