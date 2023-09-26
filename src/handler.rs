@@ -1,8 +1,6 @@
 use futures::Future;
-use log::info;
-use tokio::net::unix::SocketAddr;
+use log::{info, debug};
 use uuid::Uuid;
-use warp::filters::path::FullPath;
 use warp::filters::ws::Message;
 use warp::http::StatusCode;
 use warp::reply::{json, Reply};
@@ -20,14 +18,17 @@ use crate::ws;
 pub async fn register_handler(
     body: RegisterRequest,
     clients: Clients,
-    path: String,
+    _path: String,
+    headers: String,
 ) -> Result<impl Reply> {
     let user_id = body.user_id;
     let uuid = Uuid::new_v4().simple().to_string();
 
+    debug!("Received registration handle: {:?}", headers);
+
     register_client(uuid.clone(), user_id, clients).await;
     Ok(json(&RegisterResponse {
-        url: format!("ws://{}/ws/{}", path, uuid),
+        url: format!("/ws/{}", uuid),
     }))
 }
 

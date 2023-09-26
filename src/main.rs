@@ -4,6 +4,7 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 use tokio::sync::Mutex;
 use warp::Filter;
+use warp::http::HeaderMap;
 use std::option;
 
 extern crate argparse;
@@ -60,6 +61,7 @@ async fn main() {
         .and(warp::body::json())
         .and(with_clients(clients.clone()))
         .and(warp::addr::remote().map(move |_addr: Option<SocketAddr>| format!("{}:{}", &bind_address_str_clone, &bind_port)))
+        .and(warp::header::headers_cloned().map(|headers: HeaderMap| format!("{:?}", headers)))
         .and_then(handler::register_handler)
         .or(register
             .and(warp::delete())
@@ -101,8 +103,4 @@ async fn main() {
 
 fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
     warp::any().map(move || clients.clone())
-}
-
-pub async fn getRoot(bind_address: String, bind_port: u16) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(format!("{}:{}", bind_address, bind_port))
 }
