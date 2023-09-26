@@ -1,6 +1,6 @@
 use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, RwLock};
 use warp::{filters::ws::Message, reject::Rejection};
 
 // #########################################################################################################
@@ -15,7 +15,7 @@ pub struct Client {
 // #########################################################################################################
 
 pub type Result<T> = std::result::Result<T, Rejection>;
-pub type Clients = Arc<Mutex<HashMap<String, Client>>>;
+pub type Clients = Arc<RwLock<HashMap<String, Client>>>;
 
 // #########################################################################################################
 

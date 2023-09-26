@@ -32,7 +32,7 @@ pub async fn register_handler(
 
 async fn register_client(id: String, user_id: usize, clients: Clients) {
     info!("Client registration request from ID: {}", id);
-    clients.lock().await.insert(
+    clients.write().await.insert(
         id,
         Client {
             user_id,
@@ -51,7 +51,7 @@ async fn register_client(id: String, user_id: usize, clients: Clients) {
 
 pub async fn unregister_handler(id: String, clients: Clients) -> Result<impl Reply> {
     info!("Client unregister request from ID: {}", id);
-    clients.lock().await.remove(&id);
+    clients.write().await.remove(&id);
     Ok(StatusCode::OK)
 }
 
@@ -68,7 +68,7 @@ pub fn health_handler() -> impl Future<Output = Result<impl Reply>> {
 // ws::client_connection function is called.
 
 pub async fn ws_handler(ws: warp::ws::Ws, id: String, clients: Clients) -> Result<impl Reply> {
-    let client = clients.lock().await.get(&id).cloned();
+    let client = clients.write().await.get(&id).cloned();
     match client {
         Some(c) => Ok(ws.on_upgrade(move |socket| ws::client_connection(socket, id, clients, c))),
         None => Err(warp::reject::not_found()),
@@ -89,7 +89,7 @@ pub async fn publish_handler(body: Event, clients: Clients) -> Result<impl Reply
         body.message.to_string()
     );
     clients
-        .lock()
+        .write()
         .await
         .iter_mut()
         .filter(|(_, client)| match body.user_id {

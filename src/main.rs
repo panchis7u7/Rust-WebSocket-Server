@@ -2,7 +2,7 @@ use argparse::{ArgumentParser, Store};
 use models::Clients;
 use std::net::Ipv4Addr;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 use warp::Filter;
 
 extern crate argparse;
@@ -42,7 +42,7 @@ async fn main() {
     // we want clients to connect via WebSockets to our service. To accommodate this,
     // we need a way to keep track of these clients within the service.
     // To keep them around in memory we woould use a HashMap.
-    let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
+    let clients: Clients = Arc::new(RwLock::new(HashMap::new()));
 
     // Map the "health" route to the health_handler listener.
     let health_route = warp::path!("health").and_then(handler::health_handler);
