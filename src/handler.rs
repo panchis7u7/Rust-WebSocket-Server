@@ -18,17 +18,17 @@ use crate::ws;
 pub async fn register_handler(
     body: RegisterRequest,
     clients: Clients,
-    _path: String,
-    headers: String,
+    sender: String,
+    local_ip_port: String,
 ) -> Result<impl Reply> {
     let user_id = body.user_id;
     let uuid = Uuid::new_v4().simple().to_string();
 
-    debug!("Received registration handle: {:?}", headers);
+    debug!("Received registration handle from: {:?}", sender);
 
     register_client(uuid.clone(), user_id, clients).await;
     Ok(json(&RegisterResponse {
-        url: format!("/ws/{}", uuid),
+        url: format!("ws://{}/ws/{}", local_ip_port, uuid),
     }))
 }
 
