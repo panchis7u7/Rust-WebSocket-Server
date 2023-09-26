@@ -39,7 +39,7 @@ async fn main() {
         arg_parse.parse_args_or_exit();
     }
 
-
+    
 
     // If you need to mutate through an Arc, use Mutex, RwLock, or one of the Atomic types.
     // we want clients to connect via WebSockets to our service. To accommodate this,
@@ -50,6 +50,8 @@ async fn main() {
     // Map the "health" route to the health_handler listener.
     let health_route = warp::path!("health").and_then(handler::health_handler);
 
+    let bind_address_str_clone = bind_address_str.to_owned();
+
     // Specify the route for client registration as it will be mapped afterwards.
     let register = warp::path("register");
     // Map the register and unregister handles to the client accordingly.
@@ -57,7 +59,7 @@ async fn main() {
         .and(warp::post())
         .and(warp::body::json())
         .and(with_clients(clients.clone()))
-        .and(warp::addr::remote().map(move |addr: Option<SocketAddr>| format!("{:?}:{}", addr.unwrap().ip(), &bind_port)))
+        .and(warp::addr::remote().map(move |_addr: Option<SocketAddr>| format!("{}:{}", &bind_address_str_clone, &bind_port)))
         .and_then(handler::register_handler)
         .or(register
             .and(warp::delete())
