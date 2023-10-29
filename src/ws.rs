@@ -14,7 +14,6 @@ pub struct GroupsRequest {
 }
 
 // Now that clients can register and unregister, it’s time to let them connect to our real-time WebSocket endpoint.
-
 // #########################################################################################################
 
 pub async fn client_connection(ws: WebSocket, id: String, clients: Clients, mut client: Client) {
@@ -64,16 +63,16 @@ async fn client_msg(id: &str, msg: Message, clients: &Clients) {
         return;
     }
 
-    let topics_req: GroupsRequest = match from_str(&message) {
+    let groups_request: GroupsRequest = match from_str(&message) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("error while parsing message to topics request: {}", e);
+            error!("error while parsing message to groups request: {}", e);
             return;
         }
     };
 
     let mut locked = clients.write().await;
     if let Some(v) = locked.get_mut(id) {
-        v.groups = topics_req.groups;
+        v.groups = groups_request.groups;
     }
 }

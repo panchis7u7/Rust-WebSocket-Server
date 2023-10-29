@@ -1,5 +1,5 @@
 use futures::Future;
-use log::{info, debug};
+use log::{debug, info};
 use uuid::Uuid;
 use warp::filters::ws::Message;
 use warp::http::StatusCode;
@@ -11,7 +11,8 @@ use crate::ws;
 // A new uuid is created. This ID creates a new Client with an empty sender, the user’s ID, and default topics.
 // These are simply added to the client’s data structure, returning a WebSocket URL with the uuid to the user.
 // The user can connect the client via WebSockets with this URL.
-// curl -X POST 'http://<bind_address>:<bind_port>/register' -H 'Content-Type: application/json' -d '{ "user_id": 1 }'
+// curl -X POST 'http://<bind_address>:<bind_port>/register' -H 'Content-Type: application/json' \
+// -d '{ "user_id": 1, "groups": ["test"] }'
 
 // #########################################################################################################
 
@@ -22,23 +23,24 @@ pub async fn register_handler(
     local_ip_port: String,
 ) -> Result<impl Reply> {
     let user_id = body.user_id;
+    let groups = body.groups;
     let uuid = Uuid::new_v4().simple().to_string();
 
     debug!("Received registration handle from: {:?}", sender);
 
-    register_client(uuid.clone(), user_id, clients).await;
+    register_client(uuid.clone(), user_id, groups, clients).await;
     Ok(json(&RegisterResponse {
         url: format!("ws://{}/ws/{}", local_ip_port, uuid),
     }))
 }
 
-async fn register_client(id: String, user_id: usize, clients: Clients) {
+async fn register_client(id: String, user_id: usize, groups: Vec<String>, clients: Clients) {
     info!("Client registration request from ID: {}", id);
     clients.write().await.insert(
         id,
         Client {
             user_id,
-            groups: vec![String::from("cats")],
+            groups: groups,
             sender: None,
         },
     );

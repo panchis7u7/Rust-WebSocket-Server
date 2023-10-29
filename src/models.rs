@@ -22,6 +22,7 @@ pub type Clients = Arc<RwLock<HashMap<String, Client>>>;
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct RegisterRequest {
     pub user_id: usize,
+    pub groups: Vec<String>,
 }
 
 // #########################################################################################################
